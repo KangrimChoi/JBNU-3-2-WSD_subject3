@@ -3,7 +3,7 @@ from src.config import settings
 
 #FastAPI
 from fastapi import FastAPI
-from src.routers import health
+from src.routers import users, health
 
 import uvicorn
 
@@ -12,7 +12,19 @@ import uvicorn
 ## 서버실행
 PORT_NUM = settings.PORT_NUM
 
-app = FastAPI()
+tags_metadata = [
+    {
+        "name": "Users",
+        "description": "사용자 관리 API",
+    },
+    {
+        "name": "Health",
+        "description": "서버 상태 확인 API",
+    },
+]
+
+app = FastAPI(openapi_tags = tags_metadata)
+app.include_router(users.router)
 app.include_router(health.router)
 
 @app.get("/")

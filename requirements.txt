@@ -5,6 +5,7 @@
   alembic
   python-dotenv
   pydantic
+  pydantic[email]
   bcrypt
   python-jose[cryptography]
   pytest
