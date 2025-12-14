@@ -104,3 +104,54 @@ async def add_to_wishlist(
     )
 
 
+# Read (위시리스트 목록 조회)
+@router.get(
+    "/wishlist",
+    summary="위시리스트 목록 조회",
+    response_model=APIResponse[WishlistListResponse],
+    status_code=status.HTTP_200_OK
+)
+async def get_wishlist(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    내 위시리스트 도서 목록을 조회합니다.
+    - 인증 필요
+    - 추가일 기준 최신순 정렬
+    """
+    # 위시리스트 아이템 조회 (도서 정보 포함)
+    wishlist_items = db.query(WishlistItem).filter(
+        WishlistItem.user_id == current_user.id
+    ).options(
+        joinedload(WishlistItem.book).joinedload(Book.authors)
+    ).order_by(WishlistItem.created_at.desc()).all()
+
+    # 응답 생성
+    items = []
+    for item in wishlist_items:
+        book = item.book
+        # 삭제된 도서는 제외
+        if book and book.deleted_at is None:
+            # 첫 번째 저자 이름 가져오기
+            author_name = book.authors[0].name if book.authors else "Unknown"
+            items.append(
+                WishlistListItem(
+                    book=WishlistBookInfo(
+                        id=book.id,
+                        title=book.title,
+                        author=WishlistBookAuthor(name=author_name),
+                        isbn=book.isbn
+                    ),
+                    createdAt=item.created_at
+                )
+            )
+
+    return APIResponse(
+        is_success=True,
+        message="위시리스트 목록이 성공적으로 조회되었습니다.",
+        payload=WishlistListResponse(items=items)
+    )
+
+
