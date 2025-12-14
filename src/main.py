@@ -67,6 +67,24 @@ tags_metadata = [
 #FastAPI 인스턴스 생성
 app = FastAPI(openapi_tags = tags_metadata)
 
+#CORS 설정 (테스트용 허용 도메인)
+origins = [
+    "http://localhost:3000",      # React 기본 포트
+    "http://localhost:5173",      # Vite 기본 포트
+    "http://localhost:5500",      # Live Server
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5500",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,        # 허용할 도메인 목록
+    allow_credentials=True,       # 쿠키 허용
+    allow_methods=["*"],          # 모든 HTTP 메서드 허용
+    allow_headers=["*"],          # 모든 헤더 허용
+)
+
 #레이트리밋 등록
 app.state.limiter = limiter
 
