@@ -94,3 +94,20 @@ class ReviewListResponse(BaseModel):
     """리뷰 목록 조회 응답"""
     reviews: list[ReviewListItem]
     pagination: ReviewPagination
+
+
+class TopReviewItem(BaseModel):
+    """Top-N 리뷰 아이템"""
+    id: int
+    author: ReviewAuthor
+    content: str
+    rating: int
+    like_count: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class TopReviewListResponse(BaseModel):
+    """Top-N 리뷰 목록 응답"""
+    reviews: list[TopReviewItem]

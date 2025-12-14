@@ -3,6 +3,7 @@ import math
 from datetime import datetime
 from fastapi import APIRouter, Depends, Query, Request, status
 from fastapi.responses import JSONResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 #내부 모듈
@@ -17,7 +18,9 @@ from src.schema.reviews import (
     ReviewAuthor,
     ReviewListItem,
     ReviewListResponse,
-    ReviewPagination
+    ReviewPagination,
+    TopReviewItem,
+    TopReviewListResponse
 )
 from src.schema.common import APIResponse, ErrorResponse
 from src.models.review import Review
@@ -443,4 +446,82 @@ async def unlike_review(
         is_success=True,
         message="좋아요가 취소되었습니다.",
         payload=None
+    )
+
+
+# ==================== Top-N 리뷰 ====================
+
+@router.get(
+    "/books/{book_id}/reviews/top",
+    summary="Top-N 리뷰 목록 조회",
+    response_model=APIResponse[TopReviewListResponse],
+    status_code=status.HTTP_200_OK
+)
+async def get_top_reviews(
+    request: Request,
+    book_id: int,
+    limit: int = Query(10, ge=1, le=50, description="조회할 리뷰 수 (기본값: 10, 최대: 50)"),
+    db: Session = Depends(get_db)
+):
+    """
+    특정 도서의 좋아요 순 Top-N 리뷰를 조회합니다.
+    - 인증 불필요
+    - 좋아요 수 기준 내림차순 정렬
+    """
+    book = db.query(Book).filter(
+        Book.id == book_id,
+        Book.deleted_at.is_(None)
+    ).first()
+
+    # 도서 존재 여부 확인
+    if not book:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=ErrorResponse(
+                timestamp=datetime.now(),
+                path=str(request.url.path),
+                status=404,
+                code="BOOK_NOT_FOUND",
+                message="해당 도서를 찾을 수 없습니다",
+                details={"book_id": book_id}
+            ).model_dump(mode="json")
+        )
+
+    # 좋아요 수 기준 Top-N 리뷰 조회
+    like_count = func.count(ReviewLike.review_id).label("like_count")
+
+    reviews_with_likes = db.query(
+        Review,
+        like_count
+    ).outerjoin(
+        ReviewLike, Review.id == ReviewLike.review_id
+    ).filter(
+        Review.book_id == book_id
+    ).group_by(
+        Review.id
+    ).order_by(
+        like_count.desc(),
+        Review.created_at.desc()
+    ).limit(limit).all()
+
+    # 응답 생성
+    review_items = []
+    for review, likes in reviews_with_likes:
+        # user 정보 로드
+        user = db.query(User).filter(User.id == review.user_id).first()
+        review_items.append(
+            TopReviewItem(
+                id=review.id,
+                author=ReviewAuthor(name=user.name if user else "Unknown"),
+                content=review.content,
+                rating=review.rating,
+                like_count=likes or 0,
+                created_at=review.created_at
+            )
+        )
+
+    return APIResponse(
+        is_success=True,
+        message="Top 리뷰 목록이 성공적으로 조회되었습니다.",
+        payload=TopReviewListResponse(reviews=review_items)
     )
