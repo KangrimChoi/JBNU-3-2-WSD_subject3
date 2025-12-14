@@ -28,3 +28,32 @@ class ReviewCreateResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ReviewAuthor(BaseModel):
+    """리뷰 작성자 정보"""
+    name: str
+
+
+class ReviewListItem(BaseModel):
+    """리뷰 목록 아이템"""
+    id: int
+    author: ReviewAuthor
+    content: str
+    rating: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ReviewPagination(BaseModel):
+    """리뷰 페이지네이션 정보"""
+    page: int
+    totalPages: int
+    totalElements: int
+
+
+class ReviewListResponse(BaseModel):
+    """리뷰 목록 조회 응답"""
+    reviews: list[ReviewListItem]
+    pagination: ReviewPagination
