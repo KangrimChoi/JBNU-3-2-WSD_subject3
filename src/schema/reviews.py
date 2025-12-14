@@ -1,5 +1,6 @@
 """Review Schemas"""
 from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel, Field
 
 
@@ -20,12 +21,35 @@ class ReviewCreate(BaseModel):
     )
 
 
+class ReviewUpdate(BaseModel):
+    """리뷰 수정 요청 - 모든 필드 선택적"""
+    content: Optional[str] = Field(
+        None,
+        min_length=1,
+        json_schema_extra={"example": "다른 책이랑 착각했네요.", "description": "수정할 리뷰 내용"}
+    )
+    rating: Optional[int] = Field(
+        None,
+        ge=1,
+        le=5,
+        json_schema_extra={"example": 2, "description": "수정할 별점 (1~5)"}
+    )
+
+
 # ==================== Response Schemas ====================
 
 class ReviewCreateResponse(BaseModel):
     """리뷰 작성 응답"""
     id: int
     created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ReviewUpdateResponse(BaseModel):
+    """리뷰 수정 응답"""
+    id: int
+    updated_at: datetime
 
     model_config = {"from_attributes": True}
 

@@ -10,6 +10,8 @@ from src.database import get_db
 from src.schema.reviews import (
     ReviewCreate,
     ReviewCreateResponse,
+    ReviewUpdate,
+    ReviewUpdateResponse,
     ReviewAuthor,
     ReviewListItem,
     ReviewListResponse,
@@ -180,4 +182,75 @@ async def get_reviews(
         is_success=True,
         message="리뷰 목록이 성공적으로 조회되었습니다.",
         payload=ReviewListResponse(reviews=review_items, pagination=pagination)
+    )
+
+
+# Update (리뷰 수정)
+@router.patch(
+    "/reviews/{review_id}",
+    summary="리뷰 수정",
+    response_model=APIResponse[ReviewUpdateResponse],
+    status_code=status.HTTP_200_OK
+)
+async def update_review(
+    request: Request,
+    review_id: int,
+    review_data: ReviewUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    본인이 작성한 리뷰의 내용 또는 별점을 수정합니다.
+    - 인증 필요
+    - 본인 리뷰만 수정 가능
+    """
+    # 리뷰 조회
+    review = db.query(Review).filter(Review.id == review_id).first()
+
+    # 리뷰 존재 여부 확인
+    if not review:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=ErrorResponse(
+                timestamp=datetime.now(),
+                path=str(request.url.path),
+                status=404,
+                code="REVIEW_NOT_FOUND",
+                message="해당 리뷰를 찾을 수 없습니다",
+                details={"review_id": review_id}
+            ).model_dump(mode="json")
+        )
+
+    # 본인 리뷰인지 확인
+    if review.user_id != current_user.id:
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content=ErrorResponse(
+                timestamp=datetime.now(),
+                path=str(request.url.path),
+                status=403,
+                code="FORBIDDEN",
+                message="본인의 리뷰만 수정할 수 있습니다",
+                details={"review_id": review_id}
+            ).model_dump(mode="json")
+        )
+
+    # 필드 업데이트
+    if review_data.content is not None:
+        review.content = review_data.content
+    if review_data.rating is not None:
+        review.rating = review_data.rating
+
+    review.updated_at = datetime.now()
+
+    db.commit()
+    db.refresh(review)
+
+    return APIResponse(
+        is_success=True,
+        message="리뷰가 성공적으로 수정되었습니다.",
+        payload=ReviewUpdateResponse(
+            id=review.id,
+            updated_at=review.updated_at
+        )
     )
