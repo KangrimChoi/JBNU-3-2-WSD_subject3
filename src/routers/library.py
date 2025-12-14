@@ -6,9 +6,14 @@ from sqlalchemy.orm import Session
 
 #내부 모듈
 from src.database import get_db
+from sqlalchemy.orm import joinedload
 from src.schema.library import (
     LibraryAddRequest,
-    LibraryAddResponse
+    LibraryAddResponse,
+    LibraryBookAuthor,
+    LibraryBookInfo,
+    LibraryListItem,
+    LibraryListResponse
 )
 from src.schema.common import APIResponse, ErrorResponse
 from src.models.library_item import LibraryItem
@@ -96,4 +101,53 @@ async def add_to_library(
             bookId=new_item.book_id,
             createdAt=new_item.created_at
         )
+    )
+
+
+# Read (라이브러리 목록 조회)
+@router.get(
+    "/library",
+    summary="라이브러리 목록 조회",
+    response_model=APIResponse[LibraryListResponse],
+    status_code=status.HTTP_200_OK
+)
+async def get_library(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    내 라이브러리 도서 목록을 조회합니다.
+    - 인증 필요
+    - 추가일 기준 최신순 정렬
+    """
+    # 라이브러리 아이템 조회 (도서 정보 포함)
+    library_items = db.query(LibraryItem).filter(
+        LibraryItem.user_id == current_user.id
+    ).options(
+        joinedload(LibraryItem.book)
+    ).order_by(LibraryItem.created_at.desc()).all()
+
+    # 응답 생성
+    items = []
+    for item in library_items:
+        book = item.book
+        # 삭제된 도서는 제외
+        if book and book.deleted_at is None:
+            items.append(
+                LibraryListItem(
+                    book=LibraryBookInfo(
+                        id=book.id,
+                        title=book.title,
+                        author=LibraryBookAuthor(name=book.author),
+                        isbn=book.isbn
+                    ),
+                    createdAt=item.created_at
+                )
+            )
+
+    return APIResponse(
+        is_success=True,
+        message="라이브러리 목록이 성공적으로 조회되었습니다.",
+        payload=LibraryListResponse(items=items)
     )
