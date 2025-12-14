@@ -13,6 +13,7 @@ from src.schema.reviews import (
     ReviewUpdate,
     ReviewUpdateResponse,
     ReviewDeleteResponse,
+    ReviewLikeResponse,
     ReviewAuthor,
     ReviewListItem,
     ReviewListResponse,
@@ -20,6 +21,7 @@ from src.schema.reviews import (
 )
 from src.schema.common import APIResponse, ErrorResponse
 from src.models.review import Review
+from src.models.review_like import ReviewLike
 from src.models.book import Book
 from src.models.user import User
 from src.auth.jwt import get_current_user
@@ -317,4 +319,79 @@ async def delete_review(
         is_success=True,
         message="리뷰가 성공적으로 삭제되었습니다.",
         payload=ReviewDeleteResponse(id=deleted_id)
+    )
+
+
+# ==================== 리뷰 좋아요 ====================
+
+# 리뷰 좋아요 등록
+@router.post(
+    "/reviews/{review_id}/like",
+    summary="리뷰 좋아요",
+    response_model=APIResponse[ReviewLikeResponse],
+    status_code=status.HTTP_201_CREATED
+)
+async def like_review(
+    request: Request,
+    review_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    리뷰에 좋아요를 등록합니다.
+    - 인증 필요
+    - 중복 좋아요 불가
+    """
+    review = db.query(Review).filter(Review.id == review_id).first()
+
+    # 리뷰 존재 여부 확인
+    if not review:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=ErrorResponse(
+                timestamp=datetime.now(),
+                path=str(request.url.path),
+                status=404,
+                code="REVIEW_NOT_FOUND",
+                message="해당 리뷰를 찾을 수 없습니다",
+                details={"review_id": review_id}
+            ).model_dump(mode="json")
+        )
+
+    # 중복 좋아요 검사
+    existing_like = db.query(ReviewLike).filter(
+        ReviewLike.user_id == current_user.id,
+        ReviewLike.review_id == review_id
+    ).first()
+
+    if existing_like:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content=ErrorResponse(
+                timestamp=datetime.now(),
+                path=str(request.url.path),
+                status=409,
+                code="DUPLICATE_LIKE",
+                message="이미 좋아요를 누른 리뷰입니다",
+                details={"review_id": review_id}
+            ).model_dump(mode="json")
+        )
+
+    # 좋아요 생성
+    new_like = ReviewLike(
+        user_id=current_user.id,
+        review_id=review_id
+    )
+
+    db.add(new_like)
+    db.commit()
+    db.refresh(new_like)
+
+    return APIResponse(
+        is_success=True,
+        message="좋아요가 등록되었습니다.",
+        payload=ReviewLikeResponse(
+            review_id=new_like.review_id,
+            created_at=new_like.created_at
+        )
     )

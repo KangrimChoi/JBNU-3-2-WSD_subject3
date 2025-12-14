@@ -59,6 +59,14 @@ class ReviewDeleteResponse(BaseModel):
     id: int
 
 
+class ReviewLikeResponse(BaseModel):
+    """리뷰 좋아요 응답"""
+    review_id: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class ReviewAuthor(BaseModel):
     """리뷰 작성자 정보"""
     name: str
