@@ -69,4 +69,29 @@ class BookCreateResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class BookListItem(BaseModel):
+    """도서 목록 아이템"""
+    id: int
+    title: str
+    categories: list[str]
+    authors: list[str]
+    description: Optional[str] = None
+    isbn: str
+    cover_image_url: Optional[str] = None
+    price: Decimal
+    publication_date: Optional[date] = None
 
+
+class BookPagination(BaseModel):
+    """도서 페이지네이션 정보"""
+    total_books: int
+    total_pages: int
+    current_page: int
+    page_size: int
+    page_sort: int
+
+
+class BookListResponse(BaseModel):
+    """도서 목록 조회 응답"""
+    books: list[BookListItem]
+    pagination: BookPagination
