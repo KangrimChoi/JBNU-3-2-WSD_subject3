@@ -26,7 +26,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"P@ssw0rd!\",\n  \"name\": \"홍길동\"\n}",
+							"raw": "{\n  \"email\": \"user50@example.com\",\n  \"password\": \"P@ssw0rd!\",\n  \"name\": \"전우치\"\n}",
 							"options": {
 								"raw": {
 									"headerFamily": "json",
@@ -148,6 +148,32 @@
 				},
 				{
 					"name": "내 정보 조회",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"내 정보 조회 성공 (200)\", function () {\r",
+									"      pm.response.to.have.status(200);\r",
+									"  });\r",
+									"\r",
+									"  pm.test(\"사용자 정보가 존재함\", function () {\r",
+									"      var jsonData = pm.response.json();\r",
+									"      pm.expect(jsonData.payload.id).to.be.a(\"number\");\r",
+									"      pm.expect(jsonData.payload.email).to.be.a(\"string\");\r",
+									"  });\r",
+									"\r",
+									"  pm.test(\"is_success가 true\", function () {\r",
+									"      var jsonData = pm.response.json();\r",
+									"      pm.expect(jsonData.is_success).to.eql(true);\r",
+									"  });"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -666,6 +692,51 @@
 			"item": [
 				{
 					"name": "로그인",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"로그인 성공 (200)\", function () {\r",
+									"      pm.response.to.have.status(200);\r",
+									"  });\r",
+									"\r",
+									"  pm.test(\"is_success가 true\", function () {\r",
+									"      var jsonData = pm.response.json();\r",
+									"      pm.expect(jsonData.is_success).to.eql(true);\r",
+									"  });\r",
+									"\r",
+									"  pm.test(\"토큰이 존재함\", function () {\r",
+									"      var jsonData = pm.response.json();\r",
+									"      pm.expect(jsonData.payload.access_token).to.be.a(\"string\");\r",
+									"      pm.expect(jsonData.payload.refresh_token).to.be.a(\"string\");\r",
+									"  });\r",
+									"\r",
+									"  // 토큰 환경변수에 저장\r",
+									"  if (pm.response.code === 200) {\r",
+									"      var jsonData = pm.response.json();\r",
+									"      pm.environment.set(\"bearerToken\", jsonData.payload.access_token);\r",
+									"      pm.environment.set(\"refreshToken\", jsonData.payload.refresh_token);\r",
+									"      console.log(\"토큰 저장 완료\");\r",
+									"  }"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -680,7 +751,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"p@ssw0rd!\"\n}",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"P@ssw0rd!\"\n}",
 							"options": {
 								"raw": {
 									"headerFamily": "json",
@@ -802,6 +873,45 @@
 				},
 				{
 					"name": "토큰 갱신",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"  pm.test(\"토큰 재발급 성공 (200)\", function () {\r",
+									"      pm.response.to.have.status(200);\r",
+									"  });\r",
+									"\r",
+									"  pm.test(\"새 access_token 존재\", function () {\r",
+									"      var jsonData = pm.response.json();\r",
+									"      pm.expect(jsonData.payload.access_token).to.be.a(\"string\");\r",
+									"  });\r",
+									"\r",
+									"  // 새 토큰 저장\r",
+									"  if (pm.response.code === 200) {\r",
+									"      var jsonData = pm.response.json();\r",
+									"      pm.environment.set(\"bearerToken\", jsonData.payload.access_token);\r",
+									"      console.log(\"새 bearerToken 저장 완료\");\r",
+									"  }"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -816,7 +926,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"refresh_token\": \"eyJhbGciOiJIUzI1NiIs...\"\n}",
+							"raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}",
 							"options": {
 								"raw": {
 									"headerFamily": "json",
@@ -938,6 +1048,44 @@
 				},
 				{
 					"name": "로그아웃",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"로그아웃 성공 (200)\", function () {\r",
+									"      pm.response.to.have.status(200);\r",
+									"  });\r",
+									"\r",
+									"  pm.test(\"is_success가 true\", function () {\r",
+									"      var jsonData = pm.response.json();\r",
+									"      pm.expect(jsonData.is_success).to.eql(true);\r",
+									"  });\r",
+									"\r",
+									"  // 로그아웃 후 토큰 초기화\r",
+									"  if (pm.response.code === 200) {\r",
+									"      pm.environment.unset(\"bearerToken\");\r",
+									"      pm.environment.unset(\"refreshToken\");\r",
+									"      console.log(\"토큰 초기화 완료\");\r",
+									"  }"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -1174,6 +1322,56 @@
 				},
 				{
 					"name": "도서 목록 조회",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"도서 목록 조회 성공 (200)\", function () {\r",
+									"      pm.response.to.have.status(200);\r",
+									"  });\r",
+									"\r",
+									"  pm.test(\"is_success가 true\", function () {\r",
+									"      var jsonData = pm.response.json();\r",
+									"      pm.expect(jsonData.is_success).to.eql(true);\r",
+									"  });\r",
+									"\r",
+									"  pm.test(\"books 배열이 존재함\", function () {\r",
+									"      var jsonData = pm.response.json();\r",
+									"      pm.expect(jsonData.payload.books).to.be.an(\"array\");\r",
+									"  });\r",
+									"\r",
+									"  pm.test(\"pagination 정보가 존재함\", function () {\r",
+									"      var jsonData = pm.response.json();\r",
+									"      pm.expect(jsonData.payload.pagination).to.be.an(\"object\");\r",
+									"  });\r",
+									"\r",
+									"  // 첫 번째 도서 ID 저장\r",
+									"  if (pm.response.code === 200) {\r",
+									"      var jsonData = pm.response.json();\r",
+									"      if (jsonData.payload.books && jsonData.payload.books.length > 0) {\r",
+									"          pm.environment.set(\"bookId\", jsonData.payload.books[0].id);\r",
+									"          console.log(\"bookId 저장: \" + jsonData.payload.books[0].id);\r",
+									"      }\r",
+									"  }"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1334,6 +1532,38 @@
 				},
 				{
 					"name": "도서 상세 조회",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"도서 상세 조회 성공 (200)\", function () {\r",
+									"      pm.response.to.have.status(200);\r",
+									"  });\r",
+									"\r",
+									"  pm.test(\"도서 정보가 존재함\", function () {\r",
+									"      var jsonData = pm.response.json();\r",
+									"      pm.expect(jsonData.payload.id).to.be.a(\"number\");\r",
+									"      pm.expect(jsonData.payload.title).to.be.a(\"string\");\r",
+									"  });"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1355,7 +1585,7 @@
 							"variable": [
 								{
 									"key": "book_id",
-									"value": "1845"
+									"value": "5"
 								}
 							]
 						},
