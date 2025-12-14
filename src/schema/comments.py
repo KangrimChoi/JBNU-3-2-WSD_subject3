@@ -46,6 +46,14 @@ class CommentDeleteResponse(BaseModel):
     id: int
 
 
+class CommentLikeResponse(BaseModel):
+    """댓글 좋아요 응답"""
+    comment_id: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class CommentAuthor(BaseModel):
     """댓글 작성자 정보"""
     name: str

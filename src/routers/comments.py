@@ -13,6 +13,7 @@ from src.schema.comments import (
     CommentUpdate,
     CommentUpdateResponse,
     CommentDeleteResponse,
+    CommentLikeResponse,
     CommentAuthor,
     CommentListItem,
     CommentListResponse,
@@ -20,6 +21,7 @@ from src.schema.comments import (
 )
 from src.schema.common import APIResponse, ErrorResponse
 from src.models.comment import Comment
+from src.models.comment_like import CommentLike
 from src.models.book import Book
 from src.models.user import User
 from src.auth.jwt import get_current_user
@@ -291,4 +293,79 @@ async def delete_comment(
         is_success=True,
         message="댓글이 성공적으로 삭제되었습니다.",
         payload=CommentDeleteResponse(id=deleted_id)
+    )
+
+
+# ==================== 댓글 좋아요 ====================
+
+# 댓글 좋아요 등록
+@router.post(
+    "/comments/{comment_id}/like",
+    summary="댓글 좋아요",
+    response_model=APIResponse[CommentLikeResponse],
+    status_code=status.HTTP_201_CREATED
+)
+async def like_comment(
+    request: Request,
+    comment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    댓글에 좋아요를 등록합니다.
+    - 인증 필요
+    - 중복 좋아요 불가
+    """
+    comment = db.query(Comment).filter(Comment.id == comment_id).first()
+
+    # 댓글 존재 여부 확인
+    if not comment:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=ErrorResponse(
+                timestamp=datetime.now(),
+                path=str(request.url.path),
+                status=404,
+                code="COMMENT_NOT_FOUND",
+                message="해당 댓글을 찾을 수 없습니다",
+                details={"comment_id": comment_id}
+            ).model_dump(mode="json")
+        )
+
+    # 중복 좋아요 검사
+    existing_like = db.query(CommentLike).filter(
+        CommentLike.user_id == current_user.id,
+        CommentLike.comment_id == comment_id
+    ).first()
+
+    if existing_like:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content=ErrorResponse(
+                timestamp=datetime.now(),
+                path=str(request.url.path),
+                status=409,
+                code="DUPLICATE_LIKE",
+                message="이미 좋아요를 누른 댓글입니다",
+                details={"comment_id": comment_id}
+            ).model_dump(mode="json")
+        )
+
+    # 좋아요 생성
+    new_like = CommentLike(
+        user_id=current_user.id,
+        comment_id=comment_id
+    )
+
+    db.add(new_like)
+    db.commit()
+    db.refresh(new_like)
+
+    return APIResponse(
+        is_success=True,
+        message="좋아요가 등록되었습니다.",
+        payload=CommentLikeResponse(
+            comment_id=new_like.comment_id,
+            created_at=new_like.created_at
+        )
     )
