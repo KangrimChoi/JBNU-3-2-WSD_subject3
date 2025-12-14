@@ -13,7 +13,8 @@ from src.schema.library import (
     LibraryBookAuthor,
     LibraryBookInfo,
     LibraryListItem,
-    LibraryListResponse
+    LibraryListResponse,
+    LibraryDeleteResponse
 )
 from src.schema.common import APIResponse, ErrorResponse
 from src.models.library_item import LibraryItem
@@ -150,4 +151,53 @@ async def get_library(
         is_success=True,
         message="라이브러리 목록이 성공적으로 조회되었습니다.",
         payload=LibraryListResponse(items=items)
+    )
+
+
+# Delete (라이브러리 도서 삭제)
+@router.delete(
+    "/library/{book_id}",
+    summary="라이브러리 도서 삭제",
+    response_model=APIResponse[LibraryDeleteResponse],
+    status_code=status.HTTP_200_OK
+)
+async def remove_from_library(
+    request: Request,
+    book_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    내 라이브러리에서 도서를 삭제합니다.
+    - 인증 필요
+    - 본인 라이브러리의 도서만 삭제 가능
+    """
+    # 라이브러리 아이템 조회
+    library_item = db.query(LibraryItem).filter(
+        LibraryItem.user_id == current_user.id,
+        LibraryItem.book_id == book_id
+    ).first()
+
+    # 라이브러리 아이템 존재 여부 확인
+    if not library_item:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=ErrorResponse(
+                timestamp=datetime.now(),
+                path=str(request.url.path),
+                status=404,
+                code="LIBRARY_ITEM_NOT_FOUND",
+                message="라이브러리에 해당 도서가 없습니다",
+                details={"book_id": book_id}
+            ).model_dump(mode="json")
+        )
+
+    # 라이브러리 아이템 삭제
+    db.delete(library_item)
+    db.commit()
+
+    return APIResponse(
+        is_success=True,
+        message="라이브러리에서 도서가 삭제되었습니다.",
+        payload=LibraryDeleteResponse(bookId=book_id)
     )

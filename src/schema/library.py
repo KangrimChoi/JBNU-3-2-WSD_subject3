@@ -49,3 +49,8 @@ class LibraryListItem(BaseModel):
 class LibraryListResponse(BaseModel):
     """라이브러리 목록 조회 응답"""
     items: list[LibraryListItem]
+
+
+class LibraryDeleteResponse(BaseModel):
+    """라이브러리 도서 삭제 응답"""
+    bookId: int
