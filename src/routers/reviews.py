@@ -395,3 +395,52 @@ async def like_review(
             created_at=new_like.created_at
         )
     )
+
+
+# 리뷰 좋아요 취소
+@router.delete(
+    "/reviews/{review_id}/like",
+    summary="리뷰 좋아요 취소",
+    response_model=APIResponse[None],
+    status_code=status.HTTP_200_OK
+)
+async def unlike_review(
+    request: Request,
+    review_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    리뷰의 좋아요를 취소합니다.
+    - 인증 필요
+    - 본인이 누른 좋아요만 취소 가능
+    """
+    # 좋아요 조회
+    like = db.query(ReviewLike).filter(
+        ReviewLike.user_id == current_user.id,
+        ReviewLike.review_id == review_id
+    ).first()
+
+    # 좋아요 존재 여부 확인
+    if not like:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=ErrorResponse(
+                timestamp=datetime.now(),
+                path=str(request.url.path),
+                status=404,
+                code="LIKE_NOT_FOUND",
+                message="좋아요를 누르지 않은 리뷰입니다",
+                details={"review_id": review_id}
+            ).model_dump(mode="json")
+        )
+
+    # 좋아요 삭제
+    db.delete(like)
+    db.commit()
+
+    return APIResponse(
+        is_success=True,
+        message="좋아요가 취소되었습니다.",
+        payload=None
+    )
