@@ -39,7 +39,14 @@ router = APIRouter(prefix="/api", tags=["Reviews"])
     "/books/{book_id}/reviews",
     summary="리뷰 작성",
     response_model=APIResponse[ReviewCreateResponse],
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        404: {"model": ErrorResponse, "description": "도서를 찾을 수 없음"},
+        409: {"model": ErrorResponse, "description": "이미 리뷰 작성함 (중복)"},
+        422: {"model": ErrorResponse, "description": "입력값 검증 실패"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def create_review(
     request: Request,
@@ -118,7 +125,11 @@ async def create_review(
     "/books/{book_id}/reviews",
     summary="리뷰 목록 조회",
     response_model=APIResponse[ReviewListResponse],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {"model": ErrorResponse, "description": "도서를 찾을 수 없음"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def get_reviews(
     request: Request,
@@ -196,7 +207,14 @@ async def get_reviews(
     "/reviews/{review_id}",
     summary="리뷰 수정",
     response_model=APIResponse[ReviewUpdateResponse],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "본인 리뷰만 수정 가능"},
+        404: {"model": ErrorResponse, "description": "리뷰를 찾을 수 없음"},
+        422: {"model": ErrorResponse, "description": "입력값 검증 실패"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def update_review(
     request: Request,
@@ -267,7 +285,13 @@ async def update_review(
     "/reviews/{review_id}",
     summary="리뷰 삭제",
     response_model=APIResponse[ReviewDeleteResponse],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "본인 리뷰만 삭제 가능"},
+        404: {"model": ErrorResponse, "description": "리뷰를 찾을 수 없음"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def delete_review(
     request: Request,
@@ -332,7 +356,13 @@ async def delete_review(
     "/reviews/{review_id}/like",
     summary="리뷰 좋아요",
     response_model=APIResponse[ReviewLikeResponse],
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        404: {"model": ErrorResponse, "description": "리뷰를 찾을 수 없음"},
+        409: {"model": ErrorResponse, "description": "이미 좋아요 누름 (중복)"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def like_review(
     request: Request,
@@ -405,7 +435,12 @@ async def like_review(
     "/reviews/{review_id}/like",
     summary="리뷰 좋아요 취소",
     response_model=APIResponse[None],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        404: {"model": ErrorResponse, "description": "좋아요를 누르지 않은 리뷰"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def unlike_review(
     request: Request,
@@ -455,7 +490,11 @@ async def unlike_review(
     "/books/{book_id}/reviews/top",
     summary="Top-N 리뷰 목록 조회",
     response_model=APIResponse[TopReviewListResponse],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {"model": ErrorResponse, "description": "도서를 찾을 수 없음"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def get_top_reviews(
     request: Request,

@@ -36,7 +36,13 @@ router = APIRouter(prefix="/api", tags=["Comments"])
     "/books/{book_id}/comments",
     summary="댓글 작성",
     response_model=APIResponse[CommentCreateResponse],
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        404: {"model": ErrorResponse, "description": "도서를 찾을 수 없음"},
+        422: {"model": ErrorResponse, "description": "입력값 검증 실패"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def create_comment(
     request: Request,
@@ -94,7 +100,11 @@ async def create_comment(
     "/books/{book_id}/comments",
     summary="댓글 목록 조회",
     response_model=APIResponse[CommentListResponse],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {"model": ErrorResponse, "description": "도서를 찾을 수 없음"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def get_comments(
     request: Request,
@@ -171,7 +181,14 @@ async def get_comments(
     "/comments/{comment_id}",
     summary="댓글 수정",
     response_model=APIResponse[CommentUpdateResponse],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "본인 댓글만 수정 가능"},
+        404: {"model": ErrorResponse, "description": "댓글을 찾을 수 없음"},
+        422: {"model": ErrorResponse, "description": "입력값 검증 실패"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def update_comment(
     request: Request,
@@ -238,7 +255,13 @@ async def update_comment(
     "/comments/{comment_id}",
     summary="댓글 삭제",
     response_model=APIResponse[CommentDeleteResponse],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "본인 댓글만 삭제 가능"},
+        404: {"model": ErrorResponse, "description": "댓글을 찾을 수 없음"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def delete_comment(
     request: Request,
@@ -303,7 +326,13 @@ async def delete_comment(
     "/comments/{comment_id}/like",
     summary="댓글 좋아요",
     response_model=APIResponse[CommentLikeResponse],
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        404: {"model": ErrorResponse, "description": "댓글을 찾을 수 없음"},
+        409: {"model": ErrorResponse, "description": "이미 좋아요 누름 (중복)"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def like_comment(
     request: Request,
@@ -376,7 +405,12 @@ async def like_comment(
     "/comments/{comment_id}/like",
     summary="댓글 좋아요 취소",
     response_model=APIResponse[None],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        404: {"model": ErrorResponse, "description": "좋아요를 누르지 않은 댓글"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def unlike_comment(
     request: Request,

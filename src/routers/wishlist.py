@@ -31,7 +31,14 @@ router = APIRouter(prefix="/api/me", tags=["Wishlist"])
     "/wishlist",
     summary="위시리스트 도서 추가",
     response_model=APIResponse[WishlistAddResponse],
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        404: {"model": ErrorResponse, "description": "도서를 찾을 수 없음"},
+        409: {"model": ErrorResponse, "description": "이미 위시리스트에 추가됨 (중복)"},
+        422: {"model": ErrorResponse, "description": "입력값 검증 실패"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def add_to_wishlist(
     request: Request,
@@ -109,7 +116,11 @@ async def add_to_wishlist(
     "/wishlist",
     summary="위시리스트 목록 조회",
     response_model=APIResponse[WishlistListResponse],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def get_wishlist(
     request: Request,
@@ -160,7 +171,12 @@ async def get_wishlist(
     "/wishlist/{book_id}",
     summary="위시리스트 도서 삭제",
     response_model=APIResponse[WishlistDeleteResponse],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        404: {"model": ErrorResponse, "description": "위시리스트에 해당 도서 없음"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def remove_from_wishlist(
     request: Request,

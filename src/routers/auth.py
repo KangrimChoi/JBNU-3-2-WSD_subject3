@@ -40,7 +40,11 @@ router = APIRouter(prefix="/api/auth", tags=["Auth"])
     "/login",
     summary="로그인",
     response_model=APIResponse[LoginResponse],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "이메일 또는 비밀번호 불일치"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 def login(request: Request, user_credentials: AuthLogin, db: Session = Depends(get_db)):
     """사용자 로그인 및 JWT 토큰 발급"""
@@ -96,7 +100,11 @@ def login(request: Request, user_credentials: AuthLogin, db: Session = Depends(g
     "/refresh",
     summary="토큰 갱신",
     response_model=APIResponse[TokenRefreshResponse],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "유효하지 않거나 만료된 Refresh Token"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 def refresh_token_endpoint(request: Request, token_request: TokenRefresh, db: Session = Depends(get_db)):
     """Refresh Token으로 새로운 Access Token 발급"""
@@ -161,7 +169,11 @@ def refresh_token_endpoint(request: Request, token_request: TokenRefresh, db: Se
     "/logout",
     summary="로그아웃",
     response_model=APIResponse[None],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요 (유효하지 않은 토큰)"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 def logout(
     credentials: HTTPAuthorizationCredentials = Depends(security),

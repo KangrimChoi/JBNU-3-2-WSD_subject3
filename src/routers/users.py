@@ -19,7 +19,17 @@ router = APIRouter(prefix="/api/users", tags=["Users"])
 # ==================== 유저 CRUD ====================
 
 # Create (회원가입)
-@router.post("/", summary="회원가입", response_model=APIResponse[UserCreateResponse], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    summary="회원가입",
+    response_model=APIResponse[UserCreateResponse],
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        409: {"model": ErrorResponse, "description": "이메일 중복"},
+        422: {"model": ErrorResponse, "description": "입력값 검증 실패"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
+)
 async def create_user(request: Request, user: UserCreate, db: Session = Depends(get_db)):
     """
     회원가입
@@ -67,7 +77,11 @@ async def create_user(request: Request, user: UserCreate, db: Session = Depends(
     "/me",
     summary="내 정보 조회",
     response_model=APIResponse[UserGetMeResponse],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 def get_me(current_user: User = Depends(get_current_user)):
     """
@@ -86,7 +100,12 @@ def get_me(current_user: User = Depends(get_current_user)):
     "/",
     summary="사용자 목록 조회 (ADMIN)",
     response_model=APIResponse[list[UserGetMeResponse]],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 def get_users(
     db: Session = Depends(get_db),
@@ -110,7 +129,13 @@ def get_users(
     "/{user_id}",
     summary="특정 사용자 조회 (ADMIN)",
     response_model=APIResponse[UserGetMeResponse],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
+        404: {"model": ErrorResponse, "description": "사용자를 찾을 수 없음"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 def get_user_by_id(
     request: Request,
@@ -151,7 +176,14 @@ def get_user_by_id(
     "/me",
     summary="내 정보 수정",
     response_model=APIResponse[UserGetMeResponse],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        400: {"model": ErrorResponse, "description": "잘못된 요청 (수정 내용 없음)"},
+        401: {"model": ErrorResponse, "description": "인증 필요 또는 현재 비밀번호 불일치"},
+        403: {"model": ErrorResponse, "description": "관리자 계정 수정 불가"},
+        422: {"model": ErrorResponse, "description": "입력값 검증 실패"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 def update_me(
     request: Request,
@@ -244,7 +276,12 @@ def update_me(
     "/me",
     summary="회원 탈퇴",
     response_model=APIResponse[None],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "관리자 계정 삭제 불가"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 def delete_me(
     request: Request,

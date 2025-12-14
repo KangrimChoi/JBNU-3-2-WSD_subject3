@@ -34,7 +34,14 @@ router = APIRouter(prefix="/api/books", tags=["Books"])
     "/",
     summary="도서 등록 (관리자)",
     response_model=APIResponse[BookCreateResponse],
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
+        409: {"model": ErrorResponse, "description": "ISBN 중복"},
+        422: {"model": ErrorResponse, "description": "입력값 검증 실패"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def create_book(
     request: Request,
@@ -125,7 +132,10 @@ async def create_book(
     "/",
     summary="도서 목록 조회",
     response_model=APIResponse[BookListResponse],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def get_books(
     page: int = Query(1, ge=1, description="페이지 번호 (기본값: 1)"),
@@ -201,7 +211,11 @@ async def get_books(
     "/{book_id}",
     summary="도서 상세 조회",
     response_model=APIResponse[BookListItem],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        404: {"model": ErrorResponse, "description": "도서를 찾을 수 없음"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def get_book_detail(
     request: Request,
@@ -259,7 +273,15 @@ async def get_book_detail(
     "/{book_id}",
     summary="도서 수정 (관리자)",
     response_model=APIResponse[BookListItem],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
+        404: {"model": ErrorResponse, "description": "도서를 찾을 수 없음"},
+        409: {"model": ErrorResponse, "description": "ISBN 중복"},
+        422: {"model": ErrorResponse, "description": "입력값 검증 실패"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def update_book(
     request: Request,
@@ -381,7 +403,13 @@ async def update_book(
     "/{book_id}",
     summary="도서 삭제 (관리자)",
     response_model=APIResponse[None],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
+        404: {"model": ErrorResponse, "description": "도서를 찾을 수 없음"},
+        500: {"model": ErrorResponse, "description": "서버 내부 오류"},
+    }
 )
 async def delete_book(
     request: Request,
