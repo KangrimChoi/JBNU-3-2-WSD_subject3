@@ -9,5 +9,7 @@
   bcrypt
   python-jose[cryptography]
   pytest
+  pytest-asyncio
+  httpx
   redis
   slowapi
