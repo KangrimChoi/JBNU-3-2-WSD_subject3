@@ -41,6 +41,11 @@ class CommentUpdateResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class CommentDeleteResponse(BaseModel):
+    """댓글 삭제 응답"""
+    id: int
+
+
 class CommentAuthor(BaseModel):
     """댓글 작성자 정보"""
     name: str

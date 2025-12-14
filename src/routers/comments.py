@@ -12,6 +12,7 @@ from src.schema.comments import (
     CommentCreateResponse,
     CommentUpdate,
     CommentUpdateResponse,
+    CommentDeleteResponse,
     CommentAuthor,
     CommentListItem,
     CommentListResponse,
@@ -227,4 +228,67 @@ async def update_comment(
             id=comment.id,
             updated_at=comment.updated_at
         )
+    )
+
+
+# Delete (댓글 삭제)
+@router.delete(
+    "/comments/{comment_id}",
+    summary="댓글 삭제",
+    response_model=APIResponse[CommentDeleteResponse],
+    status_code=status.HTTP_200_OK
+)
+async def delete_comment(
+    request: Request,
+    comment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    본인이 작성한 댓글을 삭제합니다.
+    - 인증 필요
+    - 본인 댓글만 삭제 가능
+    """
+    # 댓글 조회
+    comment = db.query(Comment).filter(Comment.id == comment_id).first()
+
+    # 댓글 존재 여부 확인
+    if not comment:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=ErrorResponse(
+                timestamp=datetime.now(),
+                path=str(request.url.path),
+                status=404,
+                code="COMMENT_NOT_FOUND",
+                message="해당 댓글을 찾을 수 없습니다",
+                details={"comment_id": comment_id}
+            ).model_dump(mode="json")
+        )
+
+    # 본인 댓글인지 확인
+    if comment.user_id != current_user.id:
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content=ErrorResponse(
+                timestamp=datetime.now(),
+                path=str(request.url.path),
+                status=403,
+                code="FORBIDDEN",
+                message="본인의 댓글만 삭제할 수 있습니다",
+                details={"comment_id": comment_id}
+            ).model_dump(mode="json")
+        )
+
+    # 댓글 ID 저장 (삭제 후 반환용)
+    deleted_id = comment.id
+
+    # 댓글 삭제
+    db.delete(comment)
+    db.commit()
+
+    return APIResponse(
+        is_success=True,
+        message="댓글이 성공적으로 삭제되었습니다.",
+        payload=CommentDeleteResponse(id=deleted_id)
     )
