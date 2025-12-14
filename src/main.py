@@ -9,12 +9,23 @@ from src.routers import users, auth, books, health, reviews, comments, library, 
 from src.auth.jwt import APIException
 from src.schema.common import ErrorResponse
 
+#CORS
+from fastapi.middleware.cors import CORSMiddleware
+
+#레이트리밋
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
 import uvicorn
 
 
 
 ## 서버실행
 PORT_NUM = settings.PORT_NUM
+
+#레이트리밋 설정 (IP 기반, 분당 60회 기본 제한)
+limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
 
 #API 문서 메타데이터
 tags_metadata = [
@@ -55,6 +66,25 @@ tags_metadata = [
 
 #FastAPI 인스턴스 생성
 app = FastAPI(openapi_tags = tags_metadata)
+
+#레이트리밋 등록
+app.state.limiter = limiter
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+    """레이트리밋 초과 시 ErrorResponse 형식으로 반환"""
+    return JSONResponse(
+        status_code=429,
+        content=ErrorResponse(
+            timestamp=datetime.now(),
+            path=str(request.url.path),
+            status=429,
+            code="TOO_MANY_REQUESTS",
+            message="요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.",
+            details={"limit": str(exc.detail)}
+        ).model_dump(mode="json")
+    )
+
 app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(books.router)
