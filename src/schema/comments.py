@@ -14,12 +14,29 @@ class CommentCreate(BaseModel):
     )
 
 
+class CommentUpdate(BaseModel):
+    """댓글 수정 요청"""
+    content: str = Field(
+        ...,
+        min_length=1,
+        json_schema_extra={"example": "수정된 댓글 내용입니다.", "description": "수정할 댓글 내용"}
+    )
+
+
 # ==================== Response Schemas ====================
 
 class CommentCreateResponse(BaseModel):
     """댓글 작성 응답"""
     id: int
     created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class CommentUpdateResponse(BaseModel):
+    """댓글 수정 응답"""
+    id: int
+    updated_at: datetime
 
     model_config = {"from_attributes": True}
 
