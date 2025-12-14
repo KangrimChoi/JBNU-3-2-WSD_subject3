@@ -54,6 +54,11 @@ class ReviewUpdateResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ReviewDeleteResponse(BaseModel):
+    """리뷰 삭제 응답"""
+    id: int
+
+
 class ReviewAuthor(BaseModel):
     """리뷰 작성자 정보"""
     name: str
