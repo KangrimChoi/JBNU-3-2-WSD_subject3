@@ -52,13 +52,6 @@ python scripts/seed.py
 # 6. 서버 실행
 uvicorn src.main:app --host 0.0.0.0 --port 8080 --reload
 ```
-
-### 테스트 실행
-
-```bash
-pytest tests/ -v
-```
-
 ---
 
 ## 환경변수 설명
@@ -271,7 +264,7 @@ pytest tests/ -v
 ## 기술 스택
 
 - **Backend**: Python 3.11+, FastAPI
-- **Database**: MySQL 8.0
+- **Database**: Mariadb 8.0
 - **ORM**: SQLAlchemy + Alembic
 - **Cache**: Redis
 - **Auth**: JWT (python-jose)
