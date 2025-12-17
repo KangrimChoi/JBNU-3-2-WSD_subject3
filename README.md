@@ -83,6 +83,9 @@ uvicorn src.main:app --host 0.0.0.0 --port 8080 --reload
 | **Swagger UI** | `http://113.198.66.75:10200/docs` |
 | **Health Check** | `http://113.198.66.75:10200/api/health` |
 
+### 헬스체크 결과
+![alt text](image-1.png)
+
 ---
 
 ## 예제 계정
