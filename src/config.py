@@ -31,4 +31,9 @@ class Settings:
     REDIS_PORT: int = int(os.getenv("REDIS_PORT", 6379))
     REDIS_DB: int = int(os.getenv("REDIS_DB", 0))
 
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
+    GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8080/api/auth/google/callback")
+
 settings = Settings()

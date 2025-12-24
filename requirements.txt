@@ -13,3 +13,5 @@
   httpx
   redis
   slowapi
+  authlib
+  itsdangerous

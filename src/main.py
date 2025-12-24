@@ -11,6 +11,8 @@ from src.schema.common import ErrorResponse
 
 #CORS
 from fastapi.middleware.cors import CORSMiddleware
+#세션 미들웨어 (OAuth용)
+from starlette.middleware.sessions import SessionMiddleware
 
 #레이트리밋
 from slowapi import Limiter
@@ -83,6 +85,12 @@ app.add_middleware(
     allow_credentials=True,       # 쿠키 허용
     allow_methods=["*"],          # 모든 HTTP 메서드 허용
     allow_headers=["*"],          # 모든 헤더 허용
+)
+
+# 세션 미들웨어 추가 (OAuth용)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY
 )
 
 #레이트리밋 등록
