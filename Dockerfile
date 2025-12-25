@@ -2,13 +2,7 @@ FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 
-# 1. 기존 소스 리스트를 카카오 미러로 강제 교체 (HTTP 사용)
-RUN rm -rf /etc/apt/sources.list.d/* && \
-    echo "deb http://mirror.kakao.com/debian bookworm main contrib non-free" > /etc/apt/sources.list && \
-    echo "deb http://mirror.kakao.com/debian bookworm-updates main contrib non-free" >> /etc/apt/sources.list && \
-    echo "deb http://mirror.kakao.com/debian-security bookworm-security main contrib non-free" >> /etc/apt/sources.list
-
-# 2. 업데이트 및 필수 패키지 설치
+# 시스템 패키지 업데이트 및 필요한 패키지 설치
 RUN apt-get update && apt-get install -y \
     gcc \
     default-libmysqlclient-dev \
