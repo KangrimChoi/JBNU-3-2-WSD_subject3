@@ -402,7 +402,7 @@ async def update_book(
 @router.delete(
     "/{book_id}",
     summary="도서 삭제 (관리자)",
-    response_model=APIResponse[None],
+    response_model=None,
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         401: {"model": ErrorResponse, "description": "인증 필요"},
@@ -446,8 +446,4 @@ async def delete_book(
     book.deleted_at = datetime.now()
     db.commit()
 
-    return APIResponse(
-        is_success=True,
-        message="도서를 성공적으로 삭제했습니다.",
-        payload=None
-    )
+    return None
