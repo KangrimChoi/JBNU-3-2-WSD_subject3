@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MariaDB 데이터베이스
   mysql:
@@ -41,9 +39,10 @@ services:
 
   # FastAPI 애플리케이션
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: wsd-api:latest
+    #build:
+      #context: .
+      #dockerfile: Dockerfile
     container_name: wsd_app
     restart: always
     ports:
@@ -82,9 +81,9 @@ services:
         condition: service_healthy
     networks:
       - wsd_network
-    volumes:
-      - ./src:/app/src
-      - ./alembic:/app/alembic
+    # volumes:
+    #   - ./src:/app/src
+    #   - ./alembic:/app/alembic
     command: >
       sh -c "
         echo 'Waiting for MariaDB to be ready...' &&
@@ -92,7 +91,7 @@ services:
         echo 'Running database migrations...' &&
         alembic upgrade head &&
         echo 'Starting FastAPI application...' &&
-        uvicorn src.main:app --host 0.0.0.0 --port 8080 --reload
+        uvicorn src.main:app --host 0.0.0.0 --port 8080
       "
 
 # 네트워크 정의
