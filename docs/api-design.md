@@ -55,6 +55,23 @@
 }
 ```
 
+### HTTP 상태 코드 (12종 이상)
+
+| 코드 | 설명 | 사용 예시 |
+|------|------|-----------|
+| **200** OK | 성공 | GET, PATCH 성공 |
+| **201** Created | 리소스 생성 성공 | POST 생성 성공 (회원가입, 도서 등록, 리뷰 작성) |
+| **204** No Content | 삭제 성공 (응답 본문 없음) | DELETE 성공 (도서 삭제) |
+| **307** Temporary Redirect | 임시 리다이렉트 | OAuth 로그인 리다이렉트 |
+| **400** Bad Request | 잘못된 요청 | 유효성 검사 실패 |
+| **401** Unauthorized | 인증 필요/실패 | 토큰 누락, 만료, 잘못된 자격증명 |
+| **403** Forbidden | 권한 없음 | USER가 ADMIN 전용 API 호출 |
+| **404** Not Found | 리소스 없음 | 존재하지 않는 도서/리뷰/댓글 조회 |
+| **409** Conflict | 중복/충돌 | 이메일 중복, ISBN 중복, 중복 리뷰 |
+| **422** Unprocessable Entity | 처리 불가 | Pydantic 유효성 검사 실패 (자동 처리) |
+| **429** Too Many Requests | 요청 한도 초과 | Rate Limiting (분당 60회 초과) |
+| **500** Internal Server Error | 서버 오류 | 예기치 않은 에러 |
+
 ### 에러 코드 목록
 | HTTP | 코드 | 설명 |
 |------|------|------|
@@ -63,6 +80,7 @@
 | 401 | UNAUTHORIZED | 인증 필요/실패 |
 | 401 | TOKEN_EXPIRED | 토큰 만료 |
 | 401 | INVALID_REFRESH_TOKEN | Refresh Token 무효 |
+| 401 | INVALID_CREDENTIALS | 이메일 또는 비밀번호 불일치 |
 | 403 | FORBIDDEN | 접근 권한 없음 |
 | 404 | BOOK_NOT_FOUND | 도서 없음 |
 | 404 | USER_NOT_FOUND | 사용자 없음 |
@@ -111,6 +129,77 @@ JWT 토큰을 발급받습니다.
 
 **Errors:**
 - 401: 이메일 또는 비밀번호 불일치
+
+---
+
+#### GET /api/auth/google - Google 소셜 로그인
+Google OAuth 2.0 인증 페이지로 리다이렉트합니다.
+
+**Response (307):**
+리다이렉트: `https://accounts.google.com/o/oauth2/v2/auth?...`
+
+---
+
+#### GET /api/auth/google/callback - Google OAuth 콜백
+Google 인증 후 콜백을 처리하고 JWT 토큰을 발급합니다.
+
+**Query Parameters:**
+- `code`: Google 인증 코드 (자동 전달)
+- `state`: CSRF 방지 토큰 (자동 전달)
+
+**Response (200):**
+```json
+{
+  "is_success": true,
+  "message": "Google 로그인 성공",
+  "payload": {
+    "access_token": "eyJhbGciOiJIUzI1NiIs...",
+    "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
+    "token_type": "bearer",
+    "user": {
+      "id": 1,
+      "email": "user@gmail.com",
+      "name": "Google User"
+    }
+  }
+}
+```
+
+**Errors:**
+- 401: Google 인증 실패
+
+---
+
+#### POST /api/auth/firebase - Firebase 인증
+Firebase ID Token을 검증하고 JWT 토큰을 발급합니다.
+
+**Request Body:**
+```json
+{
+  "id_token": "eyJhbGciOiJSUzI1NiIs..."
+}
+```
+
+**Response (200):**
+```json
+{
+  "is_success": true,
+  "message": "Firebase 인증 성공",
+  "payload": {
+    "access_token": "eyJhbGciOiJIUzI1NiIs...",
+    "refresh_token": "eyJhbGciOiJIUzI1NiIs...",
+    "token_type": "bearer",
+    "user": {
+      "id": 1,
+      "email": "user@example.com",
+      "name": "Firebase User"
+    }
+  }
+}
+```
+
+**Errors:**
+- 401: 유효하지 않은 Firebase ID Token
 
 ---
 
@@ -903,6 +992,9 @@ Authorization: Bearer {access_token}
 |-----------|--------|------|-------|
 | GET /api/health | O | O | O |
 | POST /api/auth/login | O | O | O |
+| GET /api/auth/google | O | O | O |
+| GET /api/auth/google/callback | O | O | O |
+| POST /api/auth/firebase | O | O | O |
 | POST /api/auth/refresh | O | O | O |
 | POST /api/auth/logout | X | O | O |
 | POST /api/users (회원가입) | O | O | O |
@@ -942,7 +1034,7 @@ Authorization: Bearer {access_token}
 
 | 분류 | 엔드포인트 수 |
 |------|--------------|
-| Auth (인증) | 3개 |
+| Auth (인증) | 6개 (로그인, 갱신, 로그아웃, Google OAuth, Firebase) |
 | Users (사용자) | 6개 |
 | Books (도서) | 5개 |
 | Reviews (리뷰) | 7개 |
@@ -950,4 +1042,4 @@ Authorization: Bearer {access_token}
 | Library (내 서재) | 3개 |
 | Wishlist (위시리스트) | 3개 |
 | System (시스템) | 1개 |
-| **총계** | **34개** |
+| **총계** | **37개** |

@@ -17,6 +17,7 @@
 │  ┌───────────────────────────────────────────────────────────┐  │
 │  │                    Middleware Layer                       │  │
 │  │  • CORS Middleware                                        │  │
+│  │  • Session Middleware (OAuth state 관리)                  │  │
 │  │  • Rate Limiter (slowapi)                                 │  │
 │  │  • Exception Handlers                                     │  │
 │  └───────────────────────────────────────────────────────────┘  │
@@ -50,12 +51,12 @@
               ┌───────────────┴───────────────┐
               ▼                               ▼
 ┌──────────────────────┐         ┌──────────────────────┐
-│        MySQL         │         │        Redis         │
+│       MariaDB        │         │        Redis         │
 │   (Primary Data)     │         │   (Token Cache)      │
 │                      │         │                      │
 │  • Users             │         │  • Access Blacklist  │
 │  • Books             │         │  • Refresh Tokens    │
-│  • Reviews           │         │                      │
+│  • Reviews           │         │  • Session Data      │
 │  • Comments          │         │                      │
 │  • Library/Wishlist  │         │                      │
 └──────────────────────┘         └──────────────────────┘
@@ -119,13 +120,16 @@ src/schema/
 ```
 src/auth/
 ├── jwt.py           # JWT 토큰 생성/검증, APIException 정의
-└── password.py      # 비밀번호 해싱/검증 (bcrypt)
+├── password.py      # 비밀번호 해싱/검증 (bcrypt)
+├── oauth.py         # Google OAuth 2.0 클라이언트
+└── firebase_auth.py # Firebase Admin SDK 초기화 및 토큰 검증
 ```
 
 **책임**:
 - JWT 토큰 생성 및 검증
 - 비밀번호 암호화
 - 사용자 인증/인가 처리
+- 소셜 로그인 처리 (Google OAuth, Firebase)
 - 비즈니스 규칙 검증 (중복 체크, 권한 확인 등)
 
 ### 4. Data Access Layer (데이터 접근 계층)
@@ -371,20 +375,28 @@ books = query.options(
 | `uvicorn` | ASGI 서버 |
 | `sqlalchemy` | ORM |
 | `alembic` | DB 마이그레이션 |
-| `pymysql` | MySQL 드라이버 |
+| `pymysql` | MySQL/MariaDB 드라이버 |
 | `redis` | Redis 클라이언트 |
 | `python-jose` | JWT 처리 |
 | `bcrypt` | 비밀번호 해싱 |
 | `pydantic` | 데이터 검증 |
 | `python-dotenv` | 환경변수 로드 |
 | `slowapi` | Rate Limiting |
+| `authlib` | OAuth 2.0 클라이언트 (Google) |
+| `itsdangerous` | 세션 관리 (OAuth state) |
+| `firebase-admin` | Firebase Admin SDK |
+| `httpx` | HTTP 클라이언트 (테스트용) |
+| `pytest` | 테스트 프레임워크 |
+| `pytest-asyncio` | 비동기 테스트 지원 |
 
 ### 외부 서비스
 
 | 서비스 | 용도 | 포트 |
 |--------|------|------|
-| MySQL/MariaDB | 주 데이터 저장소 | 3306 |
-| Redis | 토큰 캐시/블랙리스트 | 6379 |
+| MariaDB 11.5 | 주 데이터 저장소 | 3306 |
+| Redis 7 | 토큰 캐시/블랙리스트/세션 | 6379 |
+| Google OAuth 2.0 | 소셜 로그인 | HTTPS |
+| Firebase Auth | 소셜 로그인 (ID Token 검증) | HTTPS |
 
 ---
 
@@ -400,7 +412,9 @@ WSD_HW2/
 │   │
 │   ├── auth/                # 인증/인가
 │   │   ├── jwt.py           # JWT 유틸리티, APIException
-│   │   └── password.py      # 비밀번호 해싱
+│   │   ├── password.py      # 비밀번호 해싱
+│   │   ├── oauth.py         # Google OAuth 2.0 클라이언트
+│   │   └── firebase_auth.py # Firebase Admin SDK
 │   │
 │   ├── models/              # SQLAlchemy 모델 (15개)
 │   │   ├── user.py
