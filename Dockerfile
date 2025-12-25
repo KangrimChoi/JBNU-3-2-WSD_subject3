@@ -4,6 +4,9 @@ FROM python:3.11-slim
 # 작업 디렉토리 설정
 WORKDIR /app
 
+# 데비안 소스 리스트를 한국 미러(Kakao)로 변경하여 타임아웃 방지
+RUN sed -i 's/deb.debian.org/mirror.kakao.com/g' /etc/apt/sources.list.d/debian.sources
+
 # 시스템 패키지 업데이트 및 필요한 패키지 설치
 RUN apt-get update && apt-get install -y \
     gcc \
