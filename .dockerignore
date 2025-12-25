@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# 가상환경
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+# 환경변수 (실제 환경변수는 docker-compose.yml에서 주입)
+.env
+
+# 테스트
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 문서
+*.md
+docs/
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# 기타
+*.log
+firebase-test.html
+postman/

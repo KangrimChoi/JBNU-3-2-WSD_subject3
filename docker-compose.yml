@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  # MySQL 데이터베이스
+  mysql:
+    image: mysql:8.0
+    container_name: wsd_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-wsd_db}
+      MYSQL_USER: ${DB_USER:-wsd_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-userpassword}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - wsd_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Redis 캐시/세션 스토어
+  redis:
+    image: redis:7-alpine
+    container_name: wsd_redis
+    restart: always
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - wsd_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # FastAPI 애플리케이션
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wsd_app
+    restart: always
+    ports:
+      - "${PORT_NUM:-8080}:8080"
+    environment:
+      # Database
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-wsd_user}
+      DB_PASSWORD: ${DB_PASSWORD:-userpassword}
+      DB_NAME: ${DB_NAME:-wsd_db}
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: ${REDIS_DB:-0}
+
+      # JWT
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
+
+      # Google OAuth
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
+
+      # Firebase Auth
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY}
+      FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - wsd_network
+    volumes:
+      - ./src:/app/src
+      - ./alembic:/app/alembic
+    command: >
+      sh -c "
+        echo 'Waiting for MySQL to be ready...' &&
+        sleep 10 &&
+        echo 'Running database migrations...' &&
+        alembic upgrade head &&
+        echo 'Starting FastAPI application...' &&
+        uvicorn src.main:app --host 0.0.0.0 --port 8080 --reload
+      "
+
+# 네트워크 정의
+networks:
+  wsd_network:
+    driver: bridge
+
+# 볼륨 정의 (데이터 영구 보존)
+volumes:
+  mysql_data:
+  redis_data:
