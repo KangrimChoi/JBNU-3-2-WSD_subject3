@@ -1,17 +1,16 @@
-# Python 3.11 베이스 이미지 사용 (Bookworm 기반)
-FROM python:3.11-bookworm
+# 1. 베이스 이미지 버전을 확실히 명시
+FROM python:3.11-slim-bookworm
 
-# 작업 디렉토리 설정
 WORKDIR /app
 
-# 기존 저장소 파일 제거 및 한국 미러 서버 설정 (KAIST)
-RUN rm -f /etc/apt/sources.list.d/*.sources && \
-    echo "deb http://ftp.kaist.ac.kr/debian/ bookworm main contrib non-free" > /etc/apt/sources.list && \
-    echo "deb http://ftp.kaist.ac.kr/debian/ bookworm-updates main contrib non-free" >> /etc/apt/sources.list && \
-    echo "deb http://ftp.kaist.ac.kr/debian-security/ bookworm-security main contrib non-free" >> /etc/apt/sources.list
+# 2. 기존 소스 리스트 완전히 삭제 후 다시 생성 (안전한 공식 주소 사용)
+RUN rm -rf /etc/apt/sources.list.d/* && \
+    echo "deb http://deb.debian.org/debian bookworm main" > /etc/apt/sources.list && \
+    echo "deb http://deb.debian.org/debian-security bookworm-security main" >> /etc/apt/sources.list && \
+    echo "deb http://deb.debian.org/debian bookworm-updates main" >> /etc/apt/sources.list
 
-# 시스템 패키지 업데이트 및 필요한 패키지 설치
-RUN apt-get update && apt-get install -y \
+# 3. DNS 문제일 수 있으므로 다시 업데이트 시도
+RUN apt-get update --fix-missing && apt-get install -y \
     gcc \
     default-libmysqlclient-dev \
     pkg-config \
