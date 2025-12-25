@@ -1,16 +1,15 @@
-# 1. 베이스 이미지 버전을 확실히 명시
 FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 
-# 2. 기존 소스 리스트 완전히 삭제 후 다시 생성 (안전한 공식 주소 사용)
+# 1. 기존 소스 리스트를 카카오 미러로 강제 교체 (HTTP 사용)
 RUN rm -rf /etc/apt/sources.list.d/* && \
-    echo "deb http://deb.debian.org/debian bookworm main" > /etc/apt/sources.list && \
-    echo "deb http://deb.debian.org/debian-security bookworm-security main" >> /etc/apt/sources.list && \
-    echo "deb http://deb.debian.org/debian bookworm-updates main" >> /etc/apt/sources.list
+    echo "deb http://mirror.kakao.com/debian bookworm main contrib non-free" > /etc/apt/sources.list && \
+    echo "deb http://mirror.kakao.com/debian bookworm-updates main contrib non-free" >> /etc/apt/sources.list && \
+    echo "deb http://mirror.kakao.com/debian-security bookworm-security main contrib non-free" >> /etc/apt/sources.list
 
-# 3. DNS 문제일 수 있으므로 다시 업데이트 시도
-RUN apt-get update --fix-missing && apt-get install -y \
+# 2. 업데이트 및 필수 패키지 설치
+RUN apt-get update && apt-get install -y \
     gcc \
     default-libmysqlclient-dev \
     pkg-config \
