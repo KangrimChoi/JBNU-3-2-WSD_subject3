@@ -403,7 +403,7 @@ async def update_book(
     "/{book_id}",
     summary="도서 삭제 (관리자)",
     response_model=APIResponse[None],
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     responses={
         401: {"model": ErrorResponse, "description": "인증 필요"},
         403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
