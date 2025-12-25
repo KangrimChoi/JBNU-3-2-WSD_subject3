@@ -4,9 +4,11 @@ FROM python:3.11-slim
 # 작업 디렉토리 설정
 WORKDIR /app
 
-# 한국 미러 서버 설정 (KAIST 미러)
-RUN echo "deb http://ftp.kaist.ac.kr/debian/ bookworm main" > /etc/apt/sources.list && \
-    echo "deb http://ftp.kaist.ac.kr/debian/ bookworm-updates main" >> /etc/apt/sources.list
+# 기존 저장소 파일 제거 및 한국 미러 서버 설정 (KAIST)
+RUN rm -f /etc/apt/sources.list.d/*.sources && \
+    echo "deb http://ftp.kaist.ac.kr/debian/ bookworm main contrib non-free" > /etc/apt/sources.list && \
+    echo "deb http://ftp.kaist.ac.kr/debian/ bookworm-updates main contrib non-free" >> /etc/apt/sources.list && \
+    echo "deb http://ftp.kaist.ac.kr/debian-security/ bookworm-security main contrib non-free" >> /etc/apt/sources.list
 
 # 시스템 패키지 업데이트 및 필요한 패키지 설치
 RUN apt-get update && apt-get install -y \
