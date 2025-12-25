@@ -1,5 +1,5 @@
-# Python 3.11 베이스 이미지 사용
-FROM python:3.11-slim
+# Python 3.11 베이스 이미지 사용 (Bookworm 기반)
+FROM python:3.11-bookworm
 
 # 작업 디렉토리 설정
 WORKDIR /app
